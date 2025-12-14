@@ -1,0 +1,187 @@
+puzzle-castilla-leon/
+│
+├── index.html
+├── style.css
+├── script.js
+│
+├── audio/
+│   ├── ok.mp3
+│   ├── error.mp3
+│   └── win.mp3
+│
+└── img/
+    ├── mapa.png
+    ├── avila.png
+    ├── burgos.png
+    ├── leon.png
+    ├── palencia.png
+    ├── salamanca.png
+    ├── segovia.png
+    ├── soria.png
+    ├── valladolid.png
+    └── zamora.png
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Escape Room Castilla y León</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<h2>🧩 Coloca las provincias correctamente</h2>
+<div id="tiempo">⏱️ Tiempo: 0 s</div>
+
+<div class="contenedor">
+
+  <div id="mapa">
+    <img src="img/mapa.png">
+
+    <!-- Zonas -->
+    <div class="zona" data-provincia="avila" style="top:65%; left:45%;"></div>
+    <div class="zona" data-provincia="burgos" style="top:35%; left:60%;"></div>
+    <div class="zona" data-provincia="leon" style="top:25%; left:30%;"></div>
+    <div class="zona" data-provincia="palencia" style="top:40%; left:45%;"></div>
+    <div class="zona" data-provincia="salamanca" style="top:70%; left:30%;"></div>
+    <div class="zona" data-provincia="segovia" style="top:60%; left:55%;"></div>
+    <div class="zona" data-provincia="soria" style="top:45%; left:70%;"></div>
+    <div class="zona" data-provincia="valladolid" style="top:55%; left:45%;"></div>
+    <div class="zona" data-provincia="zamora" style="top:50%; left:25%;"></div>
+  </div>
+
+  <div id="piezas">
+    <img src="img/avila.png" data-provincia="avila" draggable="true">
+    <img src="img/burgos.png" data-provincia="burgos" draggable="true">
+    <img src="img/leon.png" data-provincia="leon" draggable="true">
+    <img src="img/palencia.png" data-provincia="palencia" draggable="true">
+    <img src="img/salamanca.png" data-provincia="salamanca" draggable="true">
+    <img src="img/segovia.png" data-provincia="segovia" draggable="true">
+    <img src="img/soria.png" data-provincia="soria" draggable="true">
+    <img src="img/valladolid.png" data-provincia="valladolid" draggable="true">
+    <img src="img/zamora.png" data-provincia="zamora" draggable="true">
+  </div>
+
+</div>
+
+<div id="final">
+  🔐 CÓDIGO SECRETO: <strong>1842</strong>
+</div>
+
+<!-- Sonidos -->
+<audio id="ok" src="audio/ok.mp3"></audio>
+<audio id="error" src="audio/error.mp3"></audio>
+<audio id="win" src="audio/win.mp3"></audio>
+
+<script src="script.js"></script>
+</body>
+</html>
+body {
+  font-family: Arial, sans-serif;
+  text-align: center;
+}
+
+#tiempo {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.contenedor {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
+}
+
+#mapa {
+  position: relative;
+  width: 90vw;
+  max-width: 450px;
+}
+
+#mapa img {
+  width: 100%;
+}
+
+.zona {
+  position: absolute;
+  width: 70px;
+  height: 70px;
+}
+
+#piezas {
+  max-width: 250px;
+}
+
+#piezas img {
+  width: 80px;
+  margin: 6px;
+  cursor: grab;
+  transition: transform 0.3s;
+}
+
+.correcta {
+  animation: encajar 0.4s ease;
+  pointer-events: none;
+}
+
+@keyframes encajar {
+  0% { transform: scale(1.2); }
+  100% { transform: scale(1); }
+}
+
+#final {
+  display: none;
+  font-size: 22px;
+  color: green;
+  margin-top: 20px;
+}
+let piezas = document.querySelectorAll('#piezas img');
+let zonas = document.querySelectorAll('.zona');
+let colocadas = 0;
+let tiempo = 0;
+
+const ok = document.getElementById('ok');
+const error = document.getElementById('error');
+const win = document.getElementById('win');
+
+setInterval(() => {
+  tiempo++;
+  document.getElementById('tiempo').textContent =
+    `⏱️ Tiempo: ${tiempo} s`;
+}, 1000);
+
+piezas.forEach(pieza => {
+  pieza.addEventListener('dragstart', e => {
+    e.dataTransfer.setData('text', pieza.dataset.provincia);
+  });
+});
+
+zonas.forEach(zona => {
+  zona.addEventListener('dragover', e => e.preventDefault());
+
+  zona.addEventListener('drop', e => {
+    e.preventDefault();
+    let provincia = e.dataTransfer.getData('text');
+
+    if (zona.dataset.provincia === provincia && !zona.hasChildNodes()) {
+      let pieza = document.querySelector(`[data-provincia="${provincia}"]`);
+      zona.appendChild(pieza);
+      pieza.style.width = "100px";
+      pieza.classList.add('correcta');
+      ok.play();
+      colocadas++;
+
+      if (colocadas === 9) {
+        win.play();
+        document.getElementById('final').style.display = "block";
+
+        // Comunicación con Genially
+        window.parent.postMessage("PUZZLE_COMPLETADO", "*");
+      }
+
+    } else {
+      error.play();
+    }
+  });
+});
